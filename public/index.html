@@ -13,21 +13,34 @@
 
     <script>
 
+        function nl2br (str, is_xhtml) {
+            var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br />' : '<br>';
+            return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+        }
+
         function checkGoBottomButton() {
             var currentPosition = $(document).scrollTop();
             var bottomPosition = $(document).height() - $(window).height();
 
-            if(currentPosition < bottomPosition && $('#to-bottom').css('opacity') != 0.5) {
-                $('#to-bottom').fadeTo(500, 1);
+            if(currentPosition < bottomPosition) {
+
+                /* this a trick to handle bad float management from javascript */
+                if(Math.floor($('#to-bottom').css('opacity')*10) == 1) {
+                    $('#to-bottom').fadeTo(400, 1);
+                }
             }
-            else {
+            else if (currentPosition == bottomPosition) {
+
                 if($('#to-bottom').css('opacity') == 1) {
-                    $('#to-bottom').fadeTo(250, 0.1);
+                    $('#to-bottom').fadeTo(400, 0.1);
                 }
             }
         }
 
         $(document).ready(function() {
+
+            checkGoBottomButton();
+
             var socket = io.connect('http://localhost:9099');
             var container = $('#container .tab-content');
 
@@ -58,13 +71,14 @@
                     var newMonitorTitleLink = $('<a data-toggle="tab"></a>');
                     newMonitorTitleLink.attr('href', '#' + data.fileSlug);
                     newMonitorTitleLink.html(data.fileName + ' ');
-                    newMonitorTitleLink.append($('<span class="badge badge-important"></span> <button type="button" class="close" data-dismiss="alert">&times;</button>'));
+                    newMonitorTitleLink.append($('<span class="badge badge-important"></span>'));
                     newMonitorTitleLink.appendTo(newMonitorTitle);
 
                     newMonitorTitleLink.on('shown', function(event) {
                         var id = $(event.target).attr('href');
                         var slug = id.substr(1, id.length);
                         $(document).scrollTop(monitors[slug].scrollPos);
+                        checkGoBottomButton();
                     });
 
                     newMonitor.appendTo(container);
@@ -80,7 +94,7 @@
                     });
                 }
 
-                var newItem = $('<li>' + data.value + '</li>');
+                var newItem = $('<li>' + nl2br(data.value) + '</li>');
                 var maxScrollPosition = $(document).height() - $(window).height();
                 var mustAutoScroll = maxScrollPosition == monitors[data.fileSlug].scrollPos;
                 $('#' + data.fileSlug + ' ul').append(newItem);
