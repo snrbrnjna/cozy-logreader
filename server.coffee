@@ -26,15 +26,18 @@ io.sockets.on "connection", (socket) ->
                 command = spawn "tail", args
                 commands.push(command)
 
+                # replace . by - to avoid conflicts in the frontend
+                fileSlug = filename.replace /\./g, '-'
+
                 command.stdout.on 'data',  (data) ->
                     socket.emit 'new-data',
-                        'file': filename
+                        'file': fileSlug
                         'channel': 'stdout'
                         'value': "#{data}"
 
                 command.stderr.on 'data', (data) ->
                     socket.emit 'new-data',
-                        'file': filename
+                        'file': fileSlug
                         'channel': 'stderr'
                         'value': "#{data}"
         else
