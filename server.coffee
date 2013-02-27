@@ -8,34 +8,45 @@ fs = require "fs"
 config = require './config'
 spawn = require('child_process').spawn
 
-io.sockets.on "connection", (socket) ->
+commands = []
 
-    commands = []
+sendData = (socket, data, fileName, fileSlug, channel) ->
+    socket.emit 'new-data',
+        'fileSlug': fileSlug
+        'fileName': fileName
+        'channel': channel
+        'value': "#{data}"
+
+startProcess = (socket, fileName) ->
+
+    args = ['-f', "#{config.logPath}/#{fileName}"]
+    command = spawn "tail", args
+
+    # replace . by - to avoid conflicts in the frontend
+    fileSlug = fileName.replace /\./g, '-'
+
+    command.stdout.on 'data', (data) ->
+        sendData(socket, data, fileName, fileSlug, 'stdout')
+    command.stderr.on 'data', (data) ->
+        sendData(socket, data, fileName, fileSlug, 'stderr')
+
+    commands[fileName] = command
+
+io.sockets.on "connection", (socket) ->
 
     fs.readdir config.logPath, (err, files) ->
 
         if !err
             for fileName in files
-                args = ['-f', "#{config.logPath}/#{fileName}"]
-                command = spawn "tail", args
-                commands.push(command)
+                startProcess(socket, fileName)
 
-                # replace . by - to avoid conflicts in the frontend
-                fileSlug = fileName.replace /\./g, '-'
-
-                sendData = (data) ->
-                    socket.emit 'new-data',
-                        'fileSlug': fileSlug
-                        'fileName': fileName
-                        'channel': 'stderr'
-                        'value': "#{data}"
-
-                command.stdout.on 'data', sendData
-                command.stderr.on 'data', sendData
         else
             console.log err
 
     socket.on "disconnect", () ->
         console.log "Client has disconnected, closing the processes..."
-        for command in commands
+
+        for fileName, command of commands
+
+            console.log "Killing process for #{fileName}..."
             command.kill 'SIGTERM'
