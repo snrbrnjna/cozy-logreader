@@ -4,23 +4,35 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script>
-        var socket = io.connect('http://localhost:9099');
 
-        socket.on('new-data', function(data) {
+        $(document).ready(function() {
+            var socket = io.connect('http://localhost:9099');
+            var container = $('#container');
 
-            var newItem = $('<li>' + data.value + '</li>')
+            socket.on('new-data', function(data) {
 
-            $('#test ul').append(newItem);
+                if ($('#' + data.fileSlug).length == 0) {
 
-            $(window).scrollTop($(window).height());
+                    var newMonitor = $('<div id="' + data.fileSlug + '"></div>');
+                    newMonitor.append($('<p>' + data.fileName + '</p>'));
+                    newMonitor.append($('<ul></ul>'));
+
+                    newMonitor.appendTo(container);
+                }
+
+                var newItem = $('<li>' + data.value + '</li>')
+
+                $('#' + data.fileSlug + ' ul').append(newItem);
+
+                $(window).scrollTop($(window).height());
+            });
         });
     </script>
-
-
-    <div id="test">
-        <p>test.log</p>
-        <ul>
-        </ul>
-    </div>
 </head>
+<body>
+
+<div id="container">
+</div>
+
+</body>
 </html>
