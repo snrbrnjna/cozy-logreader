@@ -21,25 +21,23 @@ io.sockets.on "connection", (socket) ->
     fs.readdir config.logPath, (err, files) ->
 
         if !err
-            for filename in files
-                args = ['-f', "#{config.logPath}/#{filename}"]
+            for fileName in files
+                args = ['-f', "#{config.logPath}/#{fileName}"]
                 command = spawn "tail", args
                 commands.push(command)
 
                 # replace . by - to avoid conflicts in the frontend
-                fileSlug = filename.replace /\./g, '-'
+                fileSlug = fileName.replace /\./g, '-'
 
-                command.stdout.on 'data',  (data) ->
+                sendData = (data) ->
                     socket.emit 'new-data',
-                        'file': fileSlug
-                        'channel': 'stdout'
-                        'value': "#{data}"
-
-                command.stderr.on 'data', (data) ->
-                    socket.emit 'new-data',
-                        'file': fileSlug
+                        'fileSlug': fileSlug
+                        'fileName': fileName
                         'channel': 'stderr'
                         'value': "#{data}"
+
+                command.stdout.on 'data', sendData
+                command.stderr.on 'data', sendData
         else
             console.log err
 
