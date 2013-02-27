@@ -1,0 +1,26 @@
+<html>
+<head>
+    <title>Monitoring</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script>
+        var socket = io.connect('http://localhost:9099');
+
+        socket.on('new-data', function(data) {
+
+            var newItem = $('<li>' + data.value + '</li>')
+
+            $('#test ul').append(newItem);
+
+            $(window).scrollTop($(window).height());
+        });
+    </script>
+
+
+    <div id="test">
+        <p>test.log</p>
+        <ul>
+        </ul>
+    </div>
+</head>
+</html>
