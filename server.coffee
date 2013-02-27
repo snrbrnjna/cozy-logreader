@@ -1,18 +1,12 @@
-# Handler to display the test html file
-handler = (req, res) ->
-    data = fs.readFileSync('index.html');
-    res.writeHead 200
-    res.end data
-# ./handler
+connect = require "connect"
+app = connect.createServer(connect.static('public')).listen(9099)
 
-app = require("http").createServer(handler)
 io = require("socket.io").listen(app)
 io.set 'log level', 2 # disable heartbeat debug output
+
 fs = require "fs"
 config = require './config'
 spawn = require('child_process').spawn
-
-app.listen 9099
 
 io.sockets.on "connection", (socket) ->
 
