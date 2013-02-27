@@ -13,34 +13,106 @@
 
     <script>
 
+        function checkGoBottomButton() {
+            var currentPosition = $(document).scrollTop();
+            var bottomPosition = $(document).height() - $(window).height();
+
+            if(currentPosition < bottomPosition && $('#to-bottom').css('opacity') != 0.5) {
+                $('#to-bottom').fadeTo(500, 1);
+            }
+            else {
+                if($('#to-bottom').css('opacity') == 1) {
+                    $('#to-bottom').fadeTo(250, 0.1);
+                }
+            }
+        }
+
         $(document).ready(function() {
             var socket = io.connect('http://localhost:9099');
-            var container = $('#container');
+            var container = $('#container .tab-content');
+
+            var monitors = [];
+
+            $(document).scroll(function(event) {
+
+                var slug = $('.tab-content .active').attr('id');
+                var currentPosition = $(document).scrollTop();
+                monitors[slug].scrollPos = currentPosition;
+
+                checkGoBottomButton();
+            });
+
+            $('#go-to-bottom').click(function(event) {
+                checkGoBottomButton();
+            });
+
 
             socket.on('new-data', function(data) {
 
                 if ($('#' + data.fileSlug).length == 0) {
 
-                    var newMonitor = $('<div id="' + data.fileSlug + '"></div>');
-                    newMonitor.append($('<p>' + data.fileName + '</p>'));
+                    var newMonitor = $('<div class="tab-pane" id="' + data.fileSlug + '"></div>');
                     newMonitor.append($('<ul></ul>'));
+                    var newMonitorTitle = $('<li id="title-' + data.fileSlug + '"></li>');
+
+                    var newMonitorTitleLink = $('<a data-toggle="tab"></a>');
+                    newMonitorTitleLink.attr('href', '#' + data.fileSlug);
+                    newMonitorTitleLink.html(data.fileName + ' ');
+                    newMonitorTitleLink.append($('<span class="badge badge-important"></span> <button type="button" class="close" data-dismiss="alert">&times;</button>'));
+                    newMonitorTitleLink.appendTo(newMonitorTitle);
+
+                    newMonitorTitleLink.on('shown', function(event) {
+                        var id = $(event.target).attr('href');
+                        var slug = id.substr(1, id.length);
+                        $(document).scrollTop(monitors[slug].scrollPos);
+                    });
 
                     newMonitor.appendTo(container);
+                    newMonitorTitle.appendTo($('#menu ul'));
+
+                    monitors[data.fileSlug] = {
+                        'scrollPos': 0
+                    };
+
+                    newMonitorTitle.click(function() {
+                        counter = $('#title-' + data.fileSlug + ' span').html('');
+                        checkGoBottomButton();
+                    });
                 }
 
-                var newItem = $('<li>' + data.value + '</li>')
-
+                var newItem = $('<li>' + data.value + '</li>');
+                var maxScrollPosition = $(document).height() - $(window).height();
+                var mustAutoScroll = maxScrollPosition == monitors[data.fileSlug].scrollPos;
                 $('#' + data.fileSlug + ' ul').append(newItem);
 
-                $(window).scrollTop($(window).height());
+                if(!$('#' + data.fileSlug).hasClass('active')) {
+
+                    var counter = $('#title-' + data.fileSlug + ' span');
+                    if(counter.html() == '') {
+                        counter.html('0');
+                    }
+                    counter.html(parseInt(counter.html()) + 1);
+                }
+                else {
+
+                    if(mustAutoScroll) {
+                        $(document).scrollTop($(document).height());
+                        monitors[data.fileSlug].scrollPos = $(document).scrollTop();
+                    }
+                }
             });
         });
     </script>
 </head>
 <body>
-
 <div id="container">
+    <div id="menu" class="navbar navbar-inner navbar-fixed-top container-fluid">
+        <ul class="nav nav-tabs">
+            <li id="to-bottom"><a href="#go-to-bottom">Go to bottom <i class="icon-arrow-down"></i></a></li>
+        </ul>
+    </div>
+    <div class="tab-content"></div>
+    <div id="go-to-bottom"></div>
 </div>
-
 </body>
 </html>
