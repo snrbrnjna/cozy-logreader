@@ -17,6 +17,11 @@ sendData = (socket, data, fileName, fileSlug, channel) ->
         'channel': channel
         'value': "#{data}"
 
+killCommands = (commands) ->
+    for fileName, command of commands
+        console.log "Killing process for #{fileName}..."
+        command.kill 'SIGTERM'
+
 startProcess = (socket, fileName) ->
 
     args = ['-f', "#{config.logPath}/#{fileName}"]
@@ -45,8 +50,15 @@ io.sockets.on "connection", (socket) ->
 
     socket.on "disconnect", () ->
         console.log "Client has disconnected, closing the processes..."
+        killCommands(commands);
 
-        for fileName, command of commands
+process.on 'SIGINT', () ->
+  console.log "Server is stopping, closing the processes..."
+  killCommands(commands);
+  app.close()
+  process.exit()
 
-            console.log "Killing process for #{fileName}..."
-            command.kill 'SIGTERM'
+process.on 'SIGTERM', () ->
+  console.log "Server is stopping, closing the processes..."
+  killCommands(commands);
+  app.close()
