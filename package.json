@@ -9,7 +9,8 @@
   "dependencies": {
     "coffee-script": "~1.3.3",
     "socket.io": "=0.9",
-    "connect": ">=2.x"
+    "connect": ">=2.x",
+    "ansi_up": "=1.0.0"
   },
   "devDependencies": {
   },

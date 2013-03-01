@@ -7,15 +7,17 @@ io.set 'log level', 2 # disable heartbeat debug output
 fs = require "fs"
 config = require './config'
 spawn = require('child_process').spawn
+ansi_up = require 'ansi_up'
 
 commands = []
 
 sendData = (socket, data, fileName, fileSlug, channel) ->
+    data = "#{data}"
     socket.emit 'new-data',
         'fileSlug': fileSlug
         'fileName': fileName
         'channel': channel
-        'value': "#{data}"
+        'value': ansi_up.ansi_to_html(data)
 
 killCommands = (commands) ->
     for fileName, command of commands
