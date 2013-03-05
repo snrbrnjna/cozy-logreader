@@ -17,3 +17,7 @@
 ul {
     list-style-type: none;
 }
+
+li.old, li.new  {
+    word-wrap: break-word;
+}
