@@ -16,7 +16,7 @@ sendData = (socket, data, fileName, fileSlug, channel) ->
         'fileSlug': fileSlug
         'fileName': fileName
         'channel': channel
-        'value': data.data.replace /(\[[0-9]+m)*/g, ""
+        'value': data.replace /(\[[0-9]+m)*/g, ""
 
 killCommands = (commands) ->
     for fileName, command of commands
