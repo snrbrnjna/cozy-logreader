@@ -1,7 +1,7 @@
 require "js-yaml"
 
 config = 
-  logPath: '/Users/hias/work/dev/jekyll/notwist/logs/'
+  logPath: ''
   port: 9099
 
 try
