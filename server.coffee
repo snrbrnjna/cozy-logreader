@@ -4,7 +4,7 @@ connect = require "connect"
 
 config = require './config'
 
-app = connect.createServer(connect.static('public')).listen(9099)
+app = connect.createServer(connect.static('public')).listen(config.port)
 io = require("socket.io").listen app
 io.set 'log level', 2 # disable heartbeat debug output
 
