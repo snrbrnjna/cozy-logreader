@@ -5,6 +5,8 @@ connect = require "connect"
 config = require './config'
 
 app = connect.createServer(connect.static('public')).listen(config.port)
+console.log("connect server is up and listening on http://localhost:" +
+  config.port + "...");
 io = require("socket.io").listen app
 io.set 'log level', 2 # disable heartbeat debug output
 
