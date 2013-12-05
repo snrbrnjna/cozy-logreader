@@ -8,7 +8,9 @@ try
   yaml = require('../_config.env.yml')
   if yaml
     config['logPath'] = yaml.preview_logspath
-    config['port'] = yaml.local_control_port
+    config['port'] = yaml.socket_port
+    config['url'] = yaml.socket_url
+    config['statusCmd'] = yaml.socket_status_cmd
     
 catch error
   console.warn("Ignoring local env config, because the file _config.env.yml " +    
