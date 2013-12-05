@@ -32,14 +32,21 @@ sendData = (socket, data, fileName, fileSlug, channel) ->
 
 # Stop given commands by sending them a SIGTERM signal.
 killCommands = (commands) ->
-    for fileName, command of commands
-        console.log "Killing process for #{fileName}..."
+    for label, command of commands
+        console.log "Killing process for #{label}..."
         command.kill 'SIGTERM'
 
+# Kills all commands still in commands-cache and resets the cache
+killAllCommands = () ->
+    killCommands all_commands
+    all_commands = []
+    for client_id of client_commands
+        killCommands client_commands[client_id]
+    client_commands = {}
 
 # Start process run a tail -f command on given file and redirect output to
 # given socket.
-startProcess = (socket, fileName) ->
+startLogProcess = (socket, fileName) ->
     console.log 'Start Log Process for ' + fileName
     args = ['-f', "#{config.logPath}/#{fileName}"]
     command = spawn "tail", args
@@ -52,25 +59,30 @@ startProcess = (socket, fileName) ->
     command.stderr.on 'data', (data) ->
         sendData(socket, data, fileName, fileSlug, 'stderr')
 
-    all_commands[socket.id + '-' + fileName] = command
-
+    command
 
 startStatusWatches = (socket) ->
     # every configured status cmd is executed in its own child_process
-    console.log config.statusCmd
     cmds = config.statusCmd
-    for cmd_key in Object.keys(cmds)
-      console.log "Start Status Watch Processes for #{cmd_key}"
-      cmd = cmds[cmd_key]
-      command = spawn cmd, []
-      command.stdout.on 'data', (data) ->
-          io.sockets.emit 'status',
-              cmd_key: "#{data}"
-      command.stderr.on 'data', (data) ->
-          io.sockets.emit 'status',
-              cmd_key: "#{data}"
 
-      all_commands["status_watch_#{cmd_key}"] = command
+    for cmd_key in Object.keys(cmds)
+        startStatusWatch(cmds[cmd_key], cmd_key, socket)
+
+startStatusWatch = (cmd, label, socket) ->
+    console.log "Start Status Watch Processes for #{label}"
+    console.log "#{label}: #{cmd}"
+
+    command = spawn cmd, []
+    command.stdout.on 'data', (data) ->
+        io.sockets.emit 'status',
+            key: label
+            value: "#{data}"
+    command.stderr.on 'data', (data) ->
+        io.sockets.emit 'status',
+            key: label
+            value: "#{data}"
+
+    all_commands["status_watch_#{label}"] = command
 
 
 # On connection, list all files in the log path directory and start redirecting
@@ -93,7 +105,7 @@ io.sockets.on "connection", (socket) ->
     fs.readdir config.logPath, (err, files) ->
         if !err
             for fileName in files
-                commands[fileName] = startProcess(socket, fileName)
+                commands[fileName] = startLogProcess(socket, fileName)
         else
             console.log err
     # save reference to every child_process of current socket
@@ -101,8 +113,9 @@ io.sockets.on "connection", (socket) ->
     
     # if client is the first one, spawn a child process to watch status of stage 
     # server
-    unless Object.keys(clients).length > 1
-        startStatusWatches socket
+    # TODO: brauchts derweil nicht
+    # unless Object.keys(clients).length > 1
+    #     startStatusWatches socket
 
 
     # register a trigger receiver for triggers coming from the current client
@@ -120,17 +133,18 @@ io.sockets.on "connection", (socket) ->
         console.log "All connected clients:"
         console.log Object.keys(clients)
         unless Object.keys(clients).length > 0
-            console.log "All clients have disconnected closing all remaining " +
+            console.log "All clients have disconnected killing all remaining " + 
               "child_processes..."
-            killCommands all_commands
+            killAllCommands()
+
 
 process.on 'SIGINT', () ->
     console.log "Server is stopping, closing the processes..."
-    killCommands all_commands
+    killAllCommands
     app.close()
     process.exit()
 
 process.on 'SIGTERM', () ->
     console.log "Server is stopping, closing the processes..."
-    killCommands all_commands
+    killAllCommands
     app.close()
