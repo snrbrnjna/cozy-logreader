@@ -65,8 +65,9 @@ startStatusWatches = (socket) ->
     # every configured status cmd is executed in its own child_process
     cmds = config.statusCmd
 
-    for cmd_key in Object.keys(cmds)
-        startStatusWatch(cmds[cmd_key], cmd_key, socket)
+    if cmds
+        for cmd_key in Object.keys(cmds)
+            startStatusWatch(cmds[cmd_key], cmd_key, socket)
 
 startStatusWatch = (cmd, label, socket) ->
     console.log "Start Status Watch Processes for #{label}"
