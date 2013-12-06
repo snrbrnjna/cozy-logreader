@@ -18,6 +18,7 @@ io.set 'log level', 2 # disable heartbeat debug output
 
 clients = {}
 client_commands = {}
+publish_command = null
 all_commands = []
 
 # Send data to connected client.
@@ -86,6 +87,35 @@ startStatusWatch = (cmd, label, socket) ->
     all_commands["status_watch_#{label}"] = command
 
 
+# Triggers the publish task unless there is currently one running yet
+publish = (socket) ->
+    console.log("Publish Command #{config.publishLiveCmd} received")
+    
+    unless publish_command
+        console.log "... spawning child process for received publish Command #{config.publishLiveCmd}"
+        publish_command = spawn config.publishLiveCmd, []
+        # command stdout
+        publish_command.stdout.on 'data', (data) ->
+            # console.log("   ... publish stdout: #{data}")
+        # command stderr
+        publish_command.stderr.on 'data', (data) ->
+            # console.log("   ... publish stderr: #{data}")
+        # When the child process finishes...
+        publish_command.on 'exit', (exit_code) ->
+            console.log("... child process for publish terminated")
+            publish_command = null
+    
+        publish_command
+    else
+        console.log "no, nothing i'm currently publishing, so i won't do nothing else, till this process has terminated"
+
+# Triggers a command if it matches with one of the below defined ones
+trigger = (socket, msg) ->
+    console.log("Received trigger with message '#{msg}' from client #{socket.id}")
+    if msg == 'publish'
+        publish(socket)
+    
+    
 # On connection, list all files in the log path directory and start redirecting
 # a tail -f for each of them to given socket.
 # When socket is disconnected, all tail -f process are stopped.
@@ -114,16 +144,13 @@ io.sockets.on "connection", (socket) ->
     
     # if client is the first one, spawn a child process to watch status of stage 
     # server
-    # TODO: brauchts derweil nicht
-    # unless Object.keys(clients).length > 1
-    #     startStatusWatches socket
+    unless Object.keys(clients).length > 1
+        startStatusWatches socket
 
 
     # register a trigger receiver for triggers coming from the current client
-    # TODO: implement
-    socket.on "trigger", (whot) ->
-      console.log('something was triggered:')
-      console.log(whot)
+    socket.on "trigger", (data) ->
+      trigger(socket, data.msg)
 
     # register a cleaning taks, when the current client closes its connection
     socket.on "disconnect", () ->

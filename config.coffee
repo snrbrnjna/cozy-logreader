@@ -11,6 +11,8 @@ try
     config['port'] = yaml.socket_port
     config['url'] = yaml.socket_url
     config['statusCmd'] = yaml.socket_status_cmd
+    config['restartPreview'] = __dirname + '/' + yaml.socket_restart_preview_cmd
+    config['publishLiveCmd'] = __dirname + '/' + yaml.socket_publish_live_cmd
     
 catch error
   console.warn("Ignoring local env config, because the file _config.env.yml " +    
