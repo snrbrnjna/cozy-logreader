@@ -10,6 +10,9 @@ connect = require "connect"
 
 config = require './config'
 
+ansispan = require 'ansispan'
+require 'colors'
+
 app = connect.createServer(connect.static('public')).listen(config.port)
 console.log("connect server is up and listening on http://localhost:" +
   config.port + "...");
@@ -28,7 +31,7 @@ sendData = (socket, data, fileName, fileSlug, channel) ->
         'fileSlug': fileSlug
         'fileName': fileName
         'channel': channel
-        'value': data.replace /(\[[0-9]+m)*/g, ""
+        'value': ansispan(data).replace /(\[[0-9]+m)*/g, ""
 
 
 # Stop given commands by sending them a SIGTERM signal.
@@ -125,7 +128,7 @@ io.sockets.on "connection", (socket) ->
     clients[socket.id] = socket
     
     # Logging
-    console.log "New client client #{socket.id} connecting" +     
+    console.log "New client client #{socket.id} connecting...".cyan +     
       " (con ##{Object.keys(clients).length})"
     console.log "All connected clients:"
     console.log Object.keys(clients)
@@ -154,7 +157,7 @@ io.sockets.on "connection", (socket) ->
 
     # register a cleaning taks, when the current client closes its connection
     socket.on "disconnect", () ->
-        console.log "Client #{socket.id} is disconnecting..."
+        console.log "Client #{socket.id} is disconnecting...".cyan
         delete clients[socket.id]
         killCommands client_commands[socket.id]
         delete client_commands[socket.id]

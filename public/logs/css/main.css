@@ -1,14 +1,18 @@
+body {
+    background: #222;
+    color: #eee;
+}
 .tab-content {
     margin-top: 50px;
     font-family: monospace;
 }
 
 .new {
-    opacity: 0.3;
+    opacity: 0.8;
 }
 
 .old {
-    opacity: 0.5;
+    opacity: 1;
 }
 
 .separator {
