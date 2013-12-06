@@ -50,10 +50,23 @@ killAllCommands = () ->
 
 # Start process run a tail -f command on given file and redirect output to
 # given socket.
-startLogProcess = (socket, fileName) ->
+startLogProcess = (socket, fileName, commands) ->
     console.log 'Start Log Process for ' + fileName
+    
+    # only tail, or pipe tail output to another process with easy-pipe
     args = ['-f', "#{config.logPath}/#{fileName}"]
-    command = spawn "tail", args
+    if (config.pipeLogOutputCmd)
+        # tail -f logfile
+        tail = spawn "tail", args
+        # modify tail -f output with an extra command
+        command = spawn config.pipeLogOutputCmd[0], config.pipeLogOutputCmd[1]
+        # pipe tail output to command
+        tail.stdout.pipe(command.stdin)
+        tail.stderr.pipe(command.stdin)
+        # save tail command as an extra child_process
+        commands[fileName + '-tail'] = tail
+    else
+        command = spawn "tail", args
 
     # replace . by - to avoid conflicts in the frontend
     fileSlug = fileName.replace /\./g, '-'
@@ -63,7 +76,7 @@ startLogProcess = (socket, fileName) ->
     command.stderr.on 'data', (data) ->
         sendData(socket, data, fileName, fileSlug, 'stderr')
 
-    command
+    commands[fileName] = command
 
 startStatusWatches = (socket) ->
     # every configured status cmd is executed in its own child_process
@@ -139,7 +152,7 @@ io.sockets.on "connection", (socket) ->
     fs.readdir config.logPath, (err, files) ->
         if !err
             for fileName in files
-                commands[fileName] = startLogProcess(socket, fileName)
+                startLogProcess(socket, fileName, commands)
         else
             console.log err
     # save reference to every child_process of current socket
@@ -157,8 +170,9 @@ io.sockets.on "connection", (socket) ->
 
     # register a cleaning taks, when the current client closes its connection
     socket.on "disconnect", () ->
-        console.log "Client #{socket.id} is disconnecting...".cyan
         delete clients[socket.id]
+        console.log "Client #{socket.id} is disconnecting...".cyan +
+          " (#{Object.keys(clients).length} cons left)"
         killCommands client_commands[socket.id]
         delete client_commands[socket.id]
         console.log "All connected clients:"

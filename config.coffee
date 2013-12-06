@@ -8,6 +8,7 @@ try
   yaml = require('../_config.env.yml')
   if yaml
     config['logPath'] = yaml.preview_logspath
+    config['pipeLogOutputCmd'] = yaml.socket_pipe_log_output_cmd
     config['port'] = yaml.socket_port
     config['url'] = yaml.socket_url
     config['statusCmd'] = yaml.socket_status_cmd
