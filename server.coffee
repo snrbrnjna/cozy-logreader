@@ -6,19 +6,44 @@
 #
 fs = require "fs"
 spawn = require('child_process').spawn
-connect = require "connect"
-
-config = require './config'
-
 ansispan = require 'ansispan'
 require 'colors'
 
-app = connect.createServer(connect.static('public')).listen(config.port)
-console.log("connect server is up and listening on http://localhost:" +
-  config.port + "...");
-io = require("socket.io").listen app
+config = require './config'
+
+# setup webserver express
+express = require 'express'
+engine = require 'ejs-locals'
+routes = require './routes'
+logs = require './routes/logs'
+http = require 'http'
+path = require 'path'
+
+app = express()
+# use ejs-locals for all ejs templates: enables stuff like layouts etc.
+app.engine 'ejs', engine
+
+# configure webserver for all environments
+app.set 'port', config.port
+app.set 'views', path.join(__dirname, 'views')
+app.set 'view engine', 'ejs'
+app.use app.router
+app.use express.static(path.join(__dirname, 'public'))
+
+# routes
+app.get '/', routes.index
+app.get '/logs', logs.index
+
+# start http server
+server = http.createServer(app).listen app.get('port'), () ->
+    console.log 'express server listening on port ' + app.get('port') + ''.green
+
+# init socket.io
+io = require("socket.io").listen server
 io.set 'log level', 2 # disable heartbeat debug output
 
+
+# socket.io handlers for all messages
 clients = {}
 client_commands = {}
 publish_command = null

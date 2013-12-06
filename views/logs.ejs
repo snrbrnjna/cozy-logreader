@@ -1,0 +1,14 @@
+<% layout('layout') -%>
+<div id="container" data-socket_url="<%= socket_url %>">
+    <div id="menu" class="navbar navbar-inner navbar-fixed-top container-fluid">
+        <span class="brand"><%= title %></span>
+        <ul class="nav nav-tabs">
+            <li id="to-bottom">
+            <a href="#go-to-bottom">
+                Go to bottom <i class="icon-arrow-down"></i></a></li>
+        </ul>
+    </div>
+    <div class="tab-content">
+        <ul></div>
+    <div id="go-to-bottom"></div>
+</div>
