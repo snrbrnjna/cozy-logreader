@@ -57,8 +57,10 @@ function checkIfElementIsViewed() {
 $(document).ready(function() {
 
     checkGoBottomButton();
-
-    var socket = io.connect('http://localhost:9099');
+    
+    var socket_url = $('[data-socket_url]').data('socket_url');
+    if (socket_url.length == 0) {return;}
+    var socket = io.connect(socket_url);
     var container = $('#container .tab-content');
     var monitors = [];
 
