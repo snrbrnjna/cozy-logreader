@@ -135,7 +135,7 @@ spawnCmd = (socket, cmd_key) ->
     
     unless trigger_commands[cmd_key]
       console.log "... spawning child process for received command #{config[cmd_key]}".yellow
-      command = spawn config.publishLiveCmd, []
+      command = spawn config[cmd_key], []
       # command stdout
       command.stdout.on 'data', (data) ->
         # DEBUG
