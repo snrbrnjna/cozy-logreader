@@ -13,7 +13,7 @@
     "ejs-locals": "~1.0.2",
     "socket.io": "~0.9",
     "js-yaml": "~2.1.3",
-    "ansispan": "~0.0.4",
+    "ansispan": "git://github.com/snrbrnjna/ansispan.git#ff34bdb48ff87c15654a5ff17098c372fbc47d03",
     "colors":  "~0.6.2"
   },
   "devDependencies": {
